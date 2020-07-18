@@ -1,6 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.keys import Keys
+from datetime import datetime
 import concurrent.futures
 import pandas as pd
 
@@ -30,13 +30,13 @@ def lookup(tick):
     # finding by xpath
     x_path = '//*[@id="contentWrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[1]/div/span/span'
     find_value = driver.find_element_by_xpath(x_path).text
+    now = datetime.now()
     driver.quit()
-    return find_value
-
+    return [find_value, now]
 
 # function builds data frame with specified columns and rows equal to all the ticker codes
 def build_table():
-    data_f = pd.DataFrame(columns=['Current Price'], index=tickers)
+    data_f = pd.DataFrame(columns=['Current Price', 'Time'], index=tickers)
     return data_f
 
 
@@ -53,6 +53,7 @@ if __name__ == '__main__':
 
         counter = 0
         for result in value:
-            df.at[tickers[counter], 'Current Price'] = result
-            counter = counter + 1
+            df.at[tickers[counter], 'Current Price'] = result[0]
+            df.at[tickers[counter], 'Time'] = result[1].strftime("%d/%m/%Y %H:%M:%S")
+            counter += 1
         print(df)
