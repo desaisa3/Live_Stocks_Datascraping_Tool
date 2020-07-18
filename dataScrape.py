@@ -4,7 +4,6 @@ from datetime import datetime
 import concurrent.futures
 import pandas as pd
 
-
 # SETUP SELENIUM
 options = Options()
 options.add_argument('headless')
@@ -20,6 +19,7 @@ for i in file:
     tickers.append(i[:-1])
 file.close()
 
+
 # function scrapes live values
 # tick: list of ticker codes
 def lookup(tick):
@@ -34,9 +34,16 @@ def lookup(tick):
     driver.quit()
     return [find_value, now]
 
+
 # function builds data frame with specified columns and rows equal to all the ticker codes
+# 10 columns ready in data frame for 10 consecutive data retrievals. This will allow to graph data
 def build_table():
-    data_f = pd.DataFrame(columns=['Current Price', 'Time'], index=tickers)
+    col = []
+    for n in range(10):
+        col.append('Current Price ' + str(n))
+        col.append('Current Time ' + str(n))
+
+    data_f = pd.DataFrame(columns=col, index=tickers)
     return data_f
 
 
@@ -47,13 +54,19 @@ if __name__ == '__main__':
     # Following block uses parallelization to execute multiple processes for scraping data
     # results of data collection are added to data frame
     # looping to continuously go back and update values
-    while True:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            value = executor.map(lookup, tickers)
 
-        counter = 0
-        for result in value:
-            df.at[tickers[counter], 'Current Price'] = result[0]
-            df.at[tickers[counter], 'Time'] = result[1].strftime("%d/%m/%Y %H:%M:%S")
-            counter += 1
-        print(df)
+    while True:
+
+        col_count = 0
+        for x in range(10):
+
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                value = executor.map(lookup, tickers)
+
+            row_count = 0
+            for result in value:
+                df.at[tickers[row_count], 'Current Price ' + str(col_count)] = result[0]
+                df.at[tickers[row_count], 'Current Time ' + str(col_count)] = result[1].strftime("%d/%m/%Y %H:%M:%S")
+                row_count += 1
+            col_count += 1
+            print(df)
